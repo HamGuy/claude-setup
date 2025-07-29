@@ -198,6 +198,7 @@ def init_command(directory=None, global_install=False):
     # Handle global installation
     if global_install:
         target_dir = Path.home() / ".claude"
+        mcp_target = Path.home() / ".mcp.json"
         print(f"Initializing Claude Code configuration globally in '{target_dir}'...")
         
         # Create target directory
@@ -205,6 +206,8 @@ def init_command(directory=None, global_install=False):
         
         # For global installation, we need both commands and agents directories
         claude_source = get_config_dir() / ".claude"
+        mcp_source = get_config_dir() / ".mcp.json"
+        
         if claude_source.exists():
             # Handle commands
             commands_source = claude_source / "commands"
@@ -240,8 +243,21 @@ def init_command(directory=None, global_install=False):
         else:
             print("Warning: .claude directory not found in source configuration")
             
+        # Handle MCP configuration
+        if mcp_source.exists():
+            if mcp_target.exists():
+                response = input("Global .mcp.json file already exists. Overwrite? (y/N): ")
+                if response.lower() == 'y':
+                    shutil.copy2(mcp_source, mcp_target)
+                    print("Copied global .mcp.json file")
+            else:
+                shutil.copy2(mcp_source, mcp_target)
+                print("Created global .mcp.json file")
+        else:
+            print("Warning: .mcp.json file not found in source configuration")
+            
         print("Global initialization complete!")
-        print("\nYour custom commands and agents are now available globally.")
+        print("\nYour custom commands, agents, and MCP configuration are now available globally.")
         print("Note: Project-specific configurations will override global ones.")
         return 0
     else:
@@ -324,7 +340,7 @@ def main():
         "--global",
         dest="global_install",
         action="store_true",
-        help="Install commands and agents globally (~/.claude/)"
+        help="Install commands, agents, and MCP config globally (~/.claude/ and ~/.mcp.json)"
     )
     
     parser.add_argument(

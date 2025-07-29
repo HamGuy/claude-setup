@@ -179,7 +179,7 @@ ccsetup init --global
 
 **Parameters:**
 - `directory` (optional): Target directory for initialization. Defaults to current directory if not specified.
-- `--global`: Install commands and agents globally in `~/.claude/` for all projects
+- `--global`: Install commands, agents, and MCP config globally (`~/.claude/` and `~/.mcp.json`) for all projects
 
 **Features:**
 - ✅ Automatically copies all required configuration files (`.claude/` directory and `.mcp.json` file)
@@ -187,12 +187,12 @@ ccsetup init --global
 - ✅ Sets proper permissions for hook scripts
 - ✅ Checks for existing configuration and prompts before overwriting
 - ✅ Provides helpful next steps after initialization
-- ✅ Supports both project-level and global command/agent installation
+- ✅ Supports both project-level and global command/agent/MCP installation
 - ✅ Works on any directory without manual file copying
 
 **Important Notes:**
-- Project-specific configuration takes precedence over global commands and agents
-- Global commands and agents are installed in `~/.claude/` as per Claude Code documentation
+- Project-specific configuration takes precedence over global commands, agents, and MCP settings
+- Global configuration is installed in `~/.claude/` and `~/.mcp.json` as per Claude Code documentation
 - If a target directory already contains Claude Code configuration, the tool will prompt before overwriting
 
 **Example:**
@@ -203,7 +203,7 @@ ccsetup init
 # Initialize in a specific directory
 ccsetup init /path/to/my/project
 
-# Initialize commands and agents globally for all projects
+# Initialize commands, agents, and MCP config globally for all projects
 ccsetup init --global
 ```
 
