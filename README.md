@@ -1,425 +1,112 @@
-# Claude Code Setup
-
-> A comprehensive configuration setup for Claude Code with Model Context Protocol (MCP) servers, custom commands, and automated workflows.
+# CCSetup
 
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-blue.svg)](https://claude.ai/code)
 [![MCP](https://img.shields.io/badge/MCP-Enabled-green.svg)](https://modelcontextprotocol.io/)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](#license)
+[![Fork](https://img.shields.io/badge/Fork%20of-AizenvoltPrime/claude--setup-lightgrey.svg)](https://github.com/AizenvoltPrime/claude-setup)
+[![GitHub stars](https://img.shields.io/github/stars/HamGuy/claude-setup?style=social)](https://github.com/HamGuy/claude-setup)
 
-## Table of Contents
+**Language**: [English](#english) | [中文](#中文)
 
-- [Overview](#overview)
-- [Quick Start](#quick-start)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Features](#features)
-- [Commands](#commands)
-- [Configuration](#configuration)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
+---
 
-## Overview
+## English
 
-This project provides a pre-configured environment for Claude Code with enhanced capabilities through:
+> A personalized fork based on [AizenvoltPrime/claude-setup](https://github.com/AizenvoltPrime/claude-setup) with custom enhancements and optimizations.
+
+### Features
 
 - **MCP Servers**: Context7, Puppeteer, Sequential Thinking, DeepWiki
 - **Custom Commands**: Intelligent workflows for commits, tasks, and problem-solving
 - **Hook System**: Automated directory management and workflow triggers
-- **Structured Workflows**: Organized task management with reporting and planning
+- **Structured Workflows**: Organized task management and planning
 
-## Quick Start
-
-## Quick Start
-
-### Option 1: Using ccsetup command (Recommended)
+### Quick Start
 
 ```bash
-# 1. Install dependencies
-pip install uv
+# One-click installation
+curl -fsSL https://raw.githubusercontent.com/HamGuy/claude-setup/main/install.sh | bash
 
-# 2. Install ccsetup command
-sudo ./install.sh
-
-# 3a. Initialize Claude Code configuration in your project
-ccsetup init /path/to/your/project
-
-# 3b. Or initialize commands globally for all projects
-ccsetup init --global
-
-# 4. Start using commands
-cd /path/to/your/project
-/task_medium implement user authentication
-```
-
-### Option 2: Manual setup
-
-```bash
-# 1. Install dependencies
-pip install uv
-
-# 2. Clone this configuration
-git clone <your-repo> claude-setup
-cd claude-setup
-
-# 3. Start using commands
-/task_medium implement user authentication
-```
-
-### Option 2: Manual setup
-
-```bash
-# 1. Install dependencies
-pip install uv
-
-# 2. Clone this configuration
-git clone <your-repo> claude-setup
-cd claude-setup
-
-# 3. Start using commands
-/task_medium implement user authentication
-```
-
-## Prerequisites
-
-Before using this setup, ensure you have:
-
-- **Claude Code**: Installed and configured
-- **Python 3.8+**: For hook script execution
-- **uv**: Package manager for Python script execution
-- **Node.js**: For MCP server functionality (npx)
-
-### Installation
-
-#### 1. Install uv (if not already installed)
-
-```bash
-# macOS/Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# After installation, open a new terminal and verify:
-uv --version
-```
-
-#### 2. Setup Configuration
-
-##### Option A: Using ccsetup command (Recommended)
-
-```bash
-# Install ccsetup globally (requires sudo)
-sudo ./install.sh
-
-# Initialize Claude Code configuration in any directory
-ccsetup init /path/to/your/project
-
-# Or initialize commands globally for all projects
-ccsetup init --global
-```
-
-##### Option B: Manual setup
-
-```bash
-# Copy configuration files to your project
-cp -r .claude/ /your/project/
-cp .mcp.json /your/project/
-
-# Ensure hook permissions
-chmod +x .claude/hooks/task_medium_prep_hook.py
-```
-
-## Features
-
-### 🎯 Custom Commands
-- **`/commit`**: Intelligent commit workflow with conventional standards
-- **`/code-review`**: Reviews uncommitted changes before committing
-- **`/task_medium`**: Advanced problem-solving with automated directory management
-- **`/task_easy`**: Simplified task workflow for lighter needs
-
-### 🤖 Custom Agents
-- **`investigator`**: Expert code investigator that tracks down related code to problems
-  - Uses sequential thinking and advanced search tools
-  - Generates comprehensive INVESTIGATION_REPORT.md files
-  - Integrated with task_medium workflow
-- **`code-flow-mapper`**: Expert code flow mapper that traces execution paths and file interconnections
-  - Maps code flow and analyzes file relationships
-  - Generates FLOW_REPORT.md files
-- **`planner`**: Expert planner that takes into account investigation and flow analysis reports
-  - Creates detailed plans that solve all problems
-  - Generates comprehensive PLAN.md files
-- **`code-reviewer`**: Senior code review specialist for quality assurance
-  - Reviews changes for quality, security, and maintainability
-  - Provides prioritized feedback (critical, warnings, suggestions)
-  - Checks for best practices and potential issues
-
-### 🔌 MCP Servers
-- **Context7**: Library documentation and code context
-- **Puppeteer**: Browser automation and web scraping  
-- **Sequential Thinking**: Advanced reasoning and problem-solving
-- **DeepWiki**: Repository documentation fetching
-
-### ⚡ Hook System
-- **UserPromptSubmit**: Automatic directory creation for task workflows
-- **Extensible**: Easy to add custom hooks for workflow automation
-- **Documentation**: [Hooks Reference](https://docs.anthropic.com/en/docs/claude-code/hooks) | [Hooks Guide](https://docs.anthropic.com/en/docs/claude-code/hooks-guide)
-
-## Commands
-
-### `ccsetup` - Configuration Setup Tool
-
-A command-line tool that simplifies the process of setting up Claude Code configuration in any directory.
-
-**Usage:**
-```bash
-ccsetup init [directory]
-ccsetup init --global
-```
-
-**Parameters:**
-- `directory` (optional): Target directory for initialization. Defaults to current directory if not specified.
-- `--global`: Install commands, agents, and MCP config globally (`~/.claude/` and `~/.mcp.json`) for all projects
-
-**Features:**
-- ✅ Automatically copies all required configuration files (`.claude/` directory and `.mcp.json` file)
-- ✅ Downloads configuration files from GitHub if not available locally
-- ✅ Sets proper permissions for hook scripts
-- ✅ Checks for existing configuration and prompts before overwriting
-- ✅ Provides helpful next steps after initialization
-- ✅ Supports both project-level and global command/agent/MCP installation
-- ✅ Works on any directory without manual file copying
-
-**Important Notes:**
-- Project-specific configuration takes precedence over global commands, agents, and MCP settings
-- Global configuration is installed in `~/.claude/` and `~/.mcp.json` as per Claude Code documentation
-- If a target directory already contains Claude Code configuration, the tool will prompt before overwriting
-
-**Example:**
-```bash
-# Initialize in current directory
+# Initialize project
 ccsetup init
 
-# Initialize in a specific directory
-ccsetup init /path/to/my/project
-
-# Initialize commands, agents, and MCP config globally for all projects
-ccsetup init --global
+# Start using
+/task_medium implement user authentication
 ```
 
-### `/task_medium` - Advanced Problem Solving
+### Main Commands
 
-Automated workflow for complex problem-solving with structured investigation and planning.
-
-**Usage:**
+#### Setup Configuration
 ```bash
-/task_medium [problem description]
+ccsetup init          # Current directory
+ccsetup init --global # Global configuration
 ```
 
-**Features:**
-- ✅ Automatic `claude-instance-{id}` directory creation
-- ✅ Sequential thinking for complex reasoning
-- ✅ Multi-agent workflow with specialized subagents
-- ✅ Codebase investigation with INVESTIGATION_REPORT.md generation
-- ✅ Code flow mapping with FLOW_REPORT.md analysis
-- ✅ Structured planning with PLAN.md output
-- ✅ Incremental instance numbering
-- ✅ Edge case handling and best practices focus
-
-**Example:**
+#### Common Commands
 ```bash
-/task_medium implement user authentication system
+/task_medium [problem description]  # Complex task processing
+/code-review                        # Code review
+/commit                            # Intelligent commit
+/task_easy                         # Simple tasks
 ```
 
-**Workflow:**
-1. 🔧 Hook detects `/task_medium` prompt
-2. 📁 Creates `claude-code-storage/claude-instance-{id}/` directory
-3. 🔍 Investigator agent analyzes codebase using sequential thinking
-4. 📄 Generates comprehensive INVESTIGATION_REPORT.md with related files
-5. 🗺️ Code-flow-mapper agent traces execution paths and file interconnections
-6. 📊 Generates detailed FLOW_REPORT.md with code relationships
-7. 📋 Planner agent reads both reports and creates comprehensive PLAN.md
-8. 👤 User reviews and approves plan
+### Troubleshooting
 
-### `/code-review` - Automated Code Review
-
-Initiates code-reviewer agent to analyze uncommitted changes only.
-
-**Usage:**
-```bash
-/code-review
-```
-
-**Features:**
-- Focuses exclusively on uncommitted changes
-- Reviews modified files for quality, security, and maintainability
-- Provides prioritized feedback:
-  - 🚨 Critical issues (must fix)
-  - ⚠️ Warnings (should fix)
-  - 💡 Suggestions (consider improving)
-- Includes specific fix examples
-
-**Example:**
-```bash
-# After making changes
-/code-review
-# Fix any critical issues
-/commit
-```
-
-### `/commit` - Intelligent Commits
-
-Streamlined commit workflow following conventional commit standards.
-
-**Features:**
-- Diff analysis and change summarization
-- Conventional commit message formatting
-- Clean, focused commits
-
-**Important:** Run `/code-review` before committing to ensure code quality.
-
-**Example:**
-```bash
-# Review changes first
-/code-review
-# After fixing issues
-/commit
-```
-
-### `/task_easy` - Simplified Tasks
-
-Lightweight task workflow for simpler problem-solving needs.
-
-## Configuration
-
-### Directory Structure
-
-```
-claude-setup/
-├── .claude/
-│   ├── settings.json          # Permissions and hook configuration
-│   ├── agents/
-│   │   ├── investigator.md    # Code investigation agent
-│   │   ├── code-flow-mapper.md # Code flow mapping agent
-│   │   ├── planner.md         # Planning agent
-│   │   └── code-reviewer.md   # Code review specialist
-│   ├── hooks/
-│   │   └── task_medium_prep_hook.py  # Auto directory creation
-│   └── commands/
-│       ├── task_medium.md     # Advanced task workflow
-│       ├── task_easy.md       # Simple task workflow
-│       ├── code-review.md     # Code review workflow
-│       └── commit.md          # Commit workflow
-├── .mcp.json                  # MCP server configuration
-├── ccsetup                    # Command-line setup tool
-├── install.sh                 # Installer for ccsetup command
-├── claude-code-storage/       # Auto-generated task directories
-└── README.md
-```
-
-### Settings Configuration
-
-The `.claude/settings.json` file contains:
-
-```json
-{
-  "permissions": {
-    "allow": ["WebFetch(domain:docs.anthropic.com)", ...],
-    "deny": [...]
-  },
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run .claude/hooks/task_medium_prep_hook.py"
-          }
-        ]
-      }
-    ]
-  },
-  "enabledMcpjsonServers": ["context7", "puppeteer", "sequential-thinking", ...]
-}
-```
-
-### MCP Configuration
-
-The `.mcp.json` file defines server configurations:
-
-```json
-{
-  "mcpServers": {
-    "context7": {
-      "command": "npx",
-      "args": ["@context7/claude-dev", "--minTokens", "1000"]
-    },
-    "puppeteer": {
-      "command": "npx",
-      "args": ["@puppeteer/claude-dev"]
-    }
-  }
-}
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**Hook not triggering:**
-- Ensure `uv` is installed and in PATH
-- Check script permissions: `chmod +x .claude/hooks/task_medium_prep_hook.py`
-- Verify hook configuration in `.claude/settings.json`
-
-**Directory creation fails:**
-- Check file system permissions
-- Ensure `claude-code-storage/` parent directory exists
-- Review hook script logs for error details
-
-**MCP servers not loading:**
-- Verify Node.js and npx are installed
-- Check `.mcp.json` configuration syntax
-- Ensure MCP packages are available via npx
-
-### Debug Mode
-
-Enable debug mode for detailed logging:
-
-```bash
-claude --debug
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes and test thoroughly
-4. Submit a pull request with detailed description
-
-### Adding Custom Hooks
-
-1. Create script in `.claude/hooks/`
-2. Make executable: `chmod +x .claude/hooks/your_hook.py`
-3. Add configuration to `.claude/settings.json`
-4. Test with sample inputs
-
-**Resources:**
-- [Hooks Reference Documentation](https://docs.anthropic.com/en/docs/claude-code/hooks)
-- [Hooks Implementation Guide](https://docs.anthropic.com/en/docs/claude-code/hooks-guide)
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=AizenvoltPrime/claude-setup&type=Date)](https://star-history.com/#AizenvoltPrime/claude-setup&Date)
-
-## License
-
-This configuration setup is provided as-is for Claude Code enhancement.
+- Hook not triggering: Check `uv` installation and permissions
+- Directory creation fails: Check file system permissions
+- MCP servers not loading: Check Node.js and configuration
 
 ---
 
-**Need help?** Check the documentation:
-- [Claude Code Main Docs](https://docs.anthropic.com/claude-code)
-- [Hooks Reference](https://docs.anthropic.com/en/docs/claude-code/hooks)
-- [Hooks Implementation Guide](https://docs.anthropic.com/en/docs/claude-code/hooks-guide)
+## 中文
 
-Or open an issue for project-specific questions.
+> 基于 [AizenvoltPrime/claude-setup](https://github.com/AizenvoltPrime/claude-setup) 的个人定制版本，包含自定义增强功能和优化。
+
+### 功能特性
+
+- **MCP 服务器**: Context7, Puppeteer, Sequential Thinking, DeepWiki
+- **自定义命令**: 智能工作流，包括提交、任务处理和问题解决
+- **钩子系统**: 自动化目录管理和工作流触发
+- **结构化工作流**: 有组织的任务管理和规划
+
+### 快速开始
+
+```bash
+# 一键安装
+curl -fsSL https://raw.githubusercontent.com/HamGuy/claude-setup/main/install.sh | bash
+
+# 初始化项目
+ccsetup init
+
+# 开始使用
+/task_medium implement user authentication
+```
+
+### 主要命令
+
+#### 初始化配置
+```bash
+ccsetup init          # 当前目录
+ccsetup init --global # 全局配置
+```
+
+#### 常用命令
+```bash
+/task_medium [problem description]  # 复杂任务处理
+/code-review                        # 代码审查
+/commit                            # 智能提交
+/task_easy                         # 简单任务
+```
+
+### 故障排除
+
+- Hook 不触发：检查 `uv` 安装和权限
+- 目录创建失败：检查文件系统权限
+- MCP 服务器未加载：检查 Node.js 和配置
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
