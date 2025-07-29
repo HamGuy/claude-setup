@@ -203,9 +203,10 @@ def init_command(directory=None, global_install=False):
         # Create target directory
         target_dir.mkdir(parents=True, exist_ok=True)
         
-        # For global installation, we only need the commands directory
+        # For global installation, we need both commands and agents directories
         claude_source = get_config_dir() / ".claude"
         if claude_source.exists():
+            # Handle commands
             commands_source = claude_source / "commands"
             if commands_source.exists():
                 commands_target = target_dir / "commands"
@@ -220,11 +221,27 @@ def init_command(directory=None, global_install=False):
                     print("Created global commands directory")
             else:
                 print("Warning: Commands directory not found in source configuration")
+                
+            # Handle agents
+            agents_source = claude_source / "agents"
+            if agents_source.exists():
+                agents_target = target_dir / "agents"
+                if agents_target.exists():
+                    response = input("Global agents directory already exists. Overwrite? (y/N): ")
+                    if response.lower() == 'y':
+                        shutil.rmtree(agents_target)
+                        shutil.copytree(agents_source, agents_target)
+                        print("Copied global agents directory")
+                else:
+                    shutil.copytree(agents_source, agents_target)
+                    print("Created global agents directory")
+            else:
+                print("Warning: Agents directory not found in source configuration")
         else:
             print("Warning: .claude directory not found in source configuration")
             
         print("Global initialization complete!")
-        print("\nYour custom commands are now available globally.")
+        print("\nYour custom commands and agents are now available globally.")
         print("Note: Project-specific configurations will override global ones.")
         return 0
     else:
@@ -307,7 +324,7 @@ def main():
         "--global",
         dest="global_install",
         action="store_true",
-        help="Install commands globally (~/.claude/commands/)"
+        help="Install commands and agents globally (~/.claude/)"
     )
     
     parser.add_argument(
