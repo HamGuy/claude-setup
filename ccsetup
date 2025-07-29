@@ -9,6 +9,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import sys
 import shutil
@@ -71,8 +72,8 @@ def download_config_files(target_dir):
             print("Error: Could not find extracted configuration directory")
             return False
         
-        # Copy the required files
-        config_items = [".claude", ".mcp.json"]
+        # Copy the required files (excluding .mcp.json)
+        config_items = [".claude"]
         copied_items = []
         failed_items = []
         
@@ -122,8 +123,8 @@ def copy_config_files(target_dir, overwrite=False):
     if not (local_claude.exists() and local_mcp.exists()):
         return download_config_files(target_dir)
     
-    # Define the configuration directories and files to copy
-    config_items = [".claude", ".mcp.json"]
+    # Define the configuration directories and files to copy (excluding .mcp.json)
+    config_items = [".claude"]
     
     copied_items = []
     failed_items = []
@@ -198,7 +199,7 @@ def init_command(directory=None, global_install=False):
     # Handle global installation
     if global_install:
         target_dir = Path.home() / ".claude"
-        mcp_target = Path.home() / ".mcp.json"
+        claude_json_target = Path.home() / ".claude.json"
         print(f"Initializing Claude Code configuration globally in '{target_dir}'...")
         
         # Create target directory
@@ -214,11 +215,8 @@ def init_command(directory=None, global_install=False):
             if commands_source.exists():
                 commands_target = target_dir / "commands"
                 if commands_target.exists():
-                    response = input("Global commands directory already exists. Overwrite? (y/N): ")
-                    if response.lower() == 'y':
-                        shutil.rmtree(commands_target)
-                        shutil.copytree(commands_source, commands_target)
-                        print("Copied global commands directory")
+                    # In non-interactive environments, we skip overwriting
+                    print("Global commands directory already exists. Skipping...")
                 else:
                     shutil.copytree(commands_source, commands_target)
                     print("Created global commands directory")
@@ -230,11 +228,8 @@ def init_command(directory=None, global_install=False):
             if agents_source.exists():
                 agents_target = target_dir / "agents"
                 if agents_target.exists():
-                    response = input("Global agents directory already exists. Overwrite? (y/N): ")
-                    if response.lower() == 'y':
-                        shutil.rmtree(agents_target)
-                        shutil.copytree(agents_source, agents_target)
-                        print("Copied global agents directory")
+                    # In non-interactive environments, we skip overwriting
+                    print("Global agents directory already exists. Skipping...")
                 else:
                     shutil.copytree(agents_source, agents_target)
                     print("Created global agents directory")
@@ -243,16 +238,34 @@ def init_command(directory=None, global_install=False):
         else:
             print("Warning: .claude directory not found in source configuration")
             
-        # Handle MCP configuration
+        # Handle MCP configuration - merge into ~/.claude.json
         if mcp_source.exists():
-            if mcp_target.exists():
-                response = input("Global .mcp.json file already exists. Overwrite? (y/N): ")
-                if response.lower() == 'y':
-                    shutil.copy2(mcp_source, mcp_target)
-                    print("Copied global .mcp.json file")
-            else:
-                shutil.copy2(mcp_source, mcp_target)
-                print("Created global .mcp.json file")
+            try:
+                # Read the MCP configuration from source
+                with open(mcp_source, 'r') as f:
+                    mcp_config = json.load(f)
+                
+                # Read existing ~/.claude.json or create empty dict
+                claude_config = {}
+                if claude_json_target.exists():
+                    with open(claude_json_target, 'r') as f:
+                        claude_config = json.load(f)
+                
+                # Merge MCP servers into claude config
+                if "mcpServers" not in claude_config:
+                    claude_config["mcpServers"] = {}
+                
+                # Add or update MCP servers
+                mcp_servers = mcp_config.get("mcpServers", {})
+                claude_config["mcpServers"].update(mcp_servers)
+                
+                # Write updated config back to ~/.claude.json
+                with open(claude_json_target, 'w') as f:
+                    json.dump(claude_config, f, indent=2)
+                
+                print("Merged MCP configuration into ~/.claude.json")
+            except Exception as e:
+                print(f"Error merging MCP configuration: {e}")
         else:
             print("Warning: .mcp.json file not found in source configuration")
             
@@ -293,6 +306,40 @@ def init_command(directory=None, global_install=False):
     if not copy_config_files(target_dir):
         print("Error: Failed to copy or download configuration files.")
         return 1
+    
+    # Handle MCP configuration for project-specific installation
+    claude_json_target = target_dir / ".claude.json"
+    mcp_source = get_config_dir() / ".mcp.json"
+    
+    if mcp_source.exists():
+        try:
+            # Read the MCP configuration from source
+            with open(mcp_source, 'r') as f:
+                mcp_config = json.load(f)
+            
+            # Read existing .claude.json or create empty dict
+            claude_config = {}
+            if claude_json_target.exists():
+                with open(claude_json_target, 'r') as f:
+                    claude_config = json.load(f)
+            
+            # Merge MCP servers into claude config
+            if "mcpServers" not in claude_config:
+                claude_config["mcpServers"] = {}
+            
+            # Add or update MCP servers
+            mcp_servers = mcp_config.get("mcpServers", {})
+            claude_config["mcpServers"].update(mcp_servers)
+            
+            # Write updated config back to .claude.json
+            with open(claude_json_target, 'w') as f:
+                json.dump(claude_config, f, indent=2)
+            
+            print("Merged MCP configuration into .claude.json")
+        except Exception as e:
+            print(f"Error merging MCP configuration: {e}")
+    else:
+        print("Warning: .mcp.json file not found in source configuration")
     
     # Set permissions for hook scripts
     permissions_set = set_permissions(target_dir)
