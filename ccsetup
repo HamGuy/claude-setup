@@ -4,6 +4,7 @@ ccsetup - Command-line tool for setting up Claude Code configuration
 
 Usage:
   ccsetup init [directory]    Initialize Claude Code configuration in the specified directory
+  ccsetup init --global       Initialize Claude Code configuration globally (~/.claude/)
   ccsetup --help              Show this help message
 """
 
@@ -192,35 +193,68 @@ def set_permissions(target_dir):
             return False
     return False
 
-def init_command(directory=None):
+def init_command(directory=None, global_install=False):
     """Initialize Claude Code configuration in the specified directory."""
-    # If no directory specified, use current directory
-    if directory is None:
-        directory = "."
-    
-    # Convert to absolute path
-    target_dir = Path(directory).resolve()
-    
-    # Check if target directory exists
-    if not target_dir.exists():
-        print(f"Error: Directory '{target_dir}' does not exist.")
-        return 1
-    
-    if not target_dir.is_dir():
-        print(f"Error: '{target_dir}' is not a directory.")
-        return 1
-    
-    print(f"Initializing Claude Code configuration in '{target_dir}'...")
-    
-    # Check if target already has Claude Code configuration
-    claude_dir = target_dir / ".claude"
-    mcp_file = target_dir / ".mcp.json"
-    
-    if claude_dir.exists() or mcp_file.exists():
-        response = input("Claude Code configuration already exists in target directory. Continue and potentially overwrite? (y/N): ")
-        if response.lower() != 'y':
-            print("Initialization cancelled.")
-            return 0
+    # Handle global installation
+    if global_install:
+        target_dir = Path.home() / ".claude"
+        print(f"Initializing Claude Code configuration globally in '{target_dir}'...")
+        
+        # Create target directory
+        target_dir.mkdir(parents=True, exist_ok=True)
+        
+        # For global installation, we only need the commands directory
+        claude_source = get_config_dir() / ".claude"
+        if claude_source.exists():
+            commands_source = claude_source / "commands"
+            if commands_source.exists():
+                commands_target = target_dir / "commands"
+                if commands_target.exists():
+                    response = input("Global commands directory already exists. Overwrite? (y/N): ")
+                    if response.lower() == 'y':
+                        shutil.rmtree(commands_target)
+                        shutil.copytree(commands_source, commands_target)
+                        print("Copied global commands directory")
+                else:
+                    shutil.copytree(commands_source, commands_target)
+                    print("Created global commands directory")
+            else:
+                print("Warning: Commands directory not found in source configuration")
+        else:
+            print("Warning: .claude directory not found in source configuration")
+            
+        print("Global initialization complete!")
+        print("\nYour custom commands are now available globally.")
+        print("Note: Project-specific configurations will override global ones.")
+        return 0
+    else:
+        # If no directory specified, use current directory
+        if directory is None:
+            directory = "."
+        
+        # Convert to absolute path
+        target_dir = Path(directory).resolve()
+        
+        # Check if target directory exists
+        if not target_dir.exists():
+            print(f"Error: Directory '{target_dir}' does not exist.")
+            return 1
+        
+        if not target_dir.is_dir():
+            print(f"Error: '{target_dir}' is not a directory.")
+            return 1
+        
+        print(f"Initializing Claude Code configuration in '{target_dir}'...")
+        
+        # Check if target already has Claude Code configuration
+        claude_dir = target_dir / ".claude"
+        mcp_file = target_dir / ".mcp.json"
+        
+        if claude_dir.exists() or mcp_file.exists():
+            response = input("Claude Code configuration already exists in target directory. Continue and potentially overwrite? (y/N): ")
+            if response.lower() != 'y':
+                print("Initialization cancelled.")
+                return 0
     
     # Copy or download configuration files
     if not copy_config_files(target_dir):
@@ -234,16 +268,17 @@ def init_command(directory=None):
     if permissions_set:
         print("Set executable permissions for hook scripts")
     
-    print("Initialization complete!")
-    print("\nNext steps:")
-    print("1. Ensure you have the required dependencies:")
-    print("   - Python 3.8+")
-    print("   - Node.js")
-    print("   - uv (https://github.com/astral-sh/uv)")
-    print("2. Install uv if not already installed:")
-    print("   curl -LsSf https://astral.sh/uv/install.sh | sh")
-    print("3. Start using Claude Code commands like:")
-    print("   /task_medium implement user authentication")
+    if not global_install:
+        print("Initialization complete!")
+        print("\nNext steps:")
+        print("1. Ensure you have the required dependencies:")
+        print("   - Python 3.8+")
+        print("   - Node.js")
+        print("   - uv (https://github.com/astral-sh/uv)")
+        print("2. Install uv if not already installed:")
+        print("   curl -LsSf https://astral.sh/uv/install.sh | sh")
+        print("3. Start using Claude Code commands like:")
+        print("   /task_medium implement user authentication")
     
     return 0
 
@@ -269,6 +304,13 @@ def main():
     )
     
     parser.add_argument(
+        "--global",
+        dest="global_install",
+        action="store_true",
+        help="Install commands globally (~/.claude/commands/)"
+    )
+    
+    parser.add_argument(
         "--help",
         action="help",
         help="Show this help message and exit"
@@ -283,7 +325,7 @@ def main():
     
     # Handle commands
     if args.command == "init":
-        return init_command(args.directory)
+        return init_command(args.directory, args.global_install)
     else:
         print(f"Unknown command: {args.command}")
         parser.print_help()

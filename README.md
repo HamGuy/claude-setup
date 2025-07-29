@@ -41,8 +41,11 @@ pip install uv
 # 2. Install ccsetup command
 sudo ./install.sh
 
-# 3. Initialize Claude Code configuration in your project
+# 3a. Initialize Claude Code configuration in your project
 ccsetup init /path/to/your/project
+
+# 3b. Or initialize commands globally for all projects
+ccsetup init --global
 
 # 4. Start using commands
 cd /path/to/your/project
@@ -111,6 +114,9 @@ sudo ./install.sh
 
 # Initialize Claude Code configuration in any directory
 ccsetup init /path/to/your/project
+
+# Or initialize commands globally for all projects
+ccsetup init --global
 ```
 
 ##### Option B: Manual setup
@@ -168,10 +174,12 @@ A command-line tool that simplifies the process of setting up Claude Code config
 **Usage:**
 ```bash
 ccsetup init [directory]
+ccsetup init --global
 ```
 
 **Parameters:**
 - `directory` (optional): Target directory for initialization. Defaults to current directory if not specified.
+- `--global`: Install commands globally in `~/.claude/commands/` for all projects
 
 **Features:**
 - ✅ Automatically copies all required configuration files (`.claude/` directory and `.mcp.json` file)
@@ -179,11 +187,12 @@ ccsetup init [directory]
 - ✅ Sets proper permissions for hook scripts
 - ✅ Checks for existing configuration and prompts before overwriting
 - ✅ Provides helpful next steps after initialization
+- ✅ Supports both project-level and global command installation
 - ✅ Works on any directory without manual file copying
 
 **Important Notes:**
-- Claude Code commands (like `/task_easy`, `/task_medium`) must be present in each project's `.claude/commands/` directory
-- Global configuration in `~/.claude-code/` can contain settings but not commands
+- Project-specific configuration takes precedence over global commands
+- Global commands are installed in `~/.claude/commands/` as per Claude Code documentation
 - If a target directory already contains Claude Code configuration, the tool will prompt before overwriting
 
 **Example:**
@@ -193,6 +202,9 @@ ccsetup init
 
 # Initialize in a specific directory
 ccsetup init /path/to/my/project
+
+# Initialize commands globally for all projects
+ccsetup init --global
 ```
 
 ### `/task_medium` - Advanced Problem Solving
