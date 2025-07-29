@@ -30,6 +30,28 @@ This project provides a pre-configured environment for Claude Code with enhanced
 
 ## Quick Start
 
+### Option 1: Using ccsetup command (Recommended)
+
+```bash
+# 1. Install dependencies
+pip install uv
+
+# 2. Install ccsetup command
+sudo ./install.sh
+
+# 3a. Initialize Claude Code configuration in your project
+ccsetup init /path/to/your/project
+
+# 3b. Or initialize globally for all projects
+ccsetup init --global
+
+# 4. Start using commands
+cd /path/to/your/project
+/task_medium implement user authentication
+```
+
+### Option 2: Manual setup
+
 ```bash
 # 1. Install dependencies
 pip install uv
@@ -67,6 +89,21 @@ uv --version
 ```
 
 #### 2. Setup Configuration
+
+##### Option A: Using ccsetup command (Recommended)
+
+```bash
+# Install ccsetup globally (requires sudo)
+sudo ./install.sh
+
+# Initialize Claude Code configuration in any directory
+ccsetup init /path/to/your/project
+
+# Or initialize globally for all projects
+ccsetup init --global
+```
+
+##### Option B: Manual setup
 
 ```bash
 # Copy configuration files to your project
@@ -113,6 +150,40 @@ chmod +x .claude/hooks/task_medium_prep_hook.py
 - **Documentation**: [Hooks Reference](https://docs.anthropic.com/en/docs/claude-code/hooks) | [Hooks Guide](https://docs.anthropic.com/en/docs/claude-code/hooks-guide)
 
 ## Commands
+
+### `ccsetup` - Configuration Setup Tool
+
+A command-line tool that simplifies the process of setting up Claude Code configuration in any directory.
+
+**Usage:**
+```bash
+ccsetup init [directory]
+ccsetup init --global
+```
+
+**Parameters:**
+- `directory` (optional): Target directory for initialization. Defaults to current directory if not specified.
+- `--global`: Install configuration globally in `~/.claude-code/` for all projects
+
+**Features:**
+- ✅ Automatically copies all required configuration files (`.claude/` directory and `.mcp.json` file)
+- ✅ Downloads configuration files from GitHub if not available locally
+- ✅ Sets proper permissions for hook scripts
+- ✅ Provides helpful next steps after initialization
+- ✅ Works on any directory without manual file copying
+- ✅ Supports global installation for all projects
+
+**Example:**
+```bash
+# Initialize in current directory
+ccsetup init
+
+# Initialize in a specific directory
+ccsetup init /path/to/my/project
+
+# Initialize globally for all projects
+ccsetup init --global
+```
 
 ### `/task_medium` - Advanced Problem Solving
 
@@ -218,6 +289,8 @@ claude-setup/
 │       ├── code-review.md     # Code review workflow
 │       └── commit.md          # Commit workflow
 ├── .mcp.json                  # MCP server configuration
+├── ccsetup                    # Command-line setup tool
+├── install.sh                 # Installer for ccsetup command
 ├── claude-code-storage/       # Auto-generated task directories
 └── README.md
 ```

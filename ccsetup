@@ -1,0 +1,285 @@
+#!/usr/bin/env python3
+"""
+ccsetup - Command-line tool for setting up Claude Code configuration
+
+Usage:
+  ccsetup init [directory]    Initialize Claude Code configuration in the specified directory
+  ccsetup init --global       Initialize Claude Code configuration globally (~/.claude-code/)
+  ccsetup --help              Show this help message
+"""
+
+import argparse
+import os
+import sys
+import shutil
+import tempfile
+import urllib.request
+import zipfile
+from pathlib import Path
+
+def get_config_dir():
+    """Get the directory where configuration files are located."""
+    if getattr(sys, 'frozen', False):
+        # Running as compiled executable
+        script_dir = Path(sys.executable).parent
+    else:
+        # Running as script
+        script_dir = Path(__file__).parent.resolve()
+    
+    # Check if there's a config directory next to the script
+    config_dir = script_dir / "ccsetup-config"
+    if config_dir.exists() and config_dir.is_dir():
+        return config_dir
+    
+    # Otherwise, use the script directory itself (for development)
+    return script_dir
+
+def download_config_files(target_dir):
+    """Download configuration files from GitHub if not available locally."""
+    print("Downloading Claude Code configuration from GitHub...")
+    
+    # Create a temporary directory for downloading
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        zip_path = Path(tmp_dir) / "claude-setup.zip"
+        
+        # Download the repository as a zip file
+        try:
+            urllib.request.urlretrieve(
+                "https://github.com/AizenvoltPrime/claude-setup/archive/refs/heads/main.zip",
+                zip_path
+            )
+        except Exception as e:
+            print(f"Error downloading configuration: {e}")
+            return False
+        
+        # Extract the zip file
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(tmp_dir)
+        except Exception as e:
+            print(f"Error extracting configuration: {e}")
+            return False
+        
+        # Find the extracted directory
+        extracted_dir = None
+        for item in Path(tmp_dir).iterdir():
+            if item.is_dir() and item.name.startswith("claude-setup"):
+                extracted_dir = item
+                break
+        
+        if not extracted_dir:
+            print("Error: Could not find extracted configuration directory")
+            return False
+        
+        # Copy the required files
+        config_items = [".claude", ".mcp.json"]
+        copied_items = []
+        failed_items = []
+        
+        for item in config_items:
+            source_path = extracted_dir / item
+            target_path = Path(target_dir) / item
+            
+            try:
+                if source_path.exists():
+                    # Remove existing directory/file if it exists
+                    if target_path.exists():
+                        if target_path.is_dir():
+                            shutil.rmtree(target_path)
+                        else:
+                            target_path.unlink()
+                    
+                    # Copy directory or file
+                    if source_path.is_dir():
+                        shutil.copytree(source_path, target_path)
+                    else:
+                        shutil.copy2(source_path, target_path)
+                    copied_items.append(item)
+                else:
+                    failed_items.append(f"{item} (not found in download)")
+            except Exception as e:
+                failed_items.append(f"{item} ({str(e)})")
+        
+        if copied_items:
+            print(f"Downloaded and copied items: {', '.join(copied_items)}")
+        
+        if failed_items:
+            print(f"Failed to download: {', '.join(failed_items)}")
+            return len(copied_items) > 0  # Return True if at least some items were copied
+        
+        return True
+
+def copy_config_files(target_dir):
+    """Copy all configuration files to the target directory."""
+    # Get the directory where configuration files are located
+    config_dir = get_config_dir()
+    
+    # Check if config files exist locally
+    local_claude = config_dir / ".claude"
+    local_mcp = config_dir / ".mcp.json"
+    
+    # If files don't exist locally, download them
+    if not (local_claude.exists() and local_mcp.exists()):
+        return download_config_files(target_dir)
+    
+    # Define the configuration directories and files to copy
+    config_items = [".claude", ".mcp.json"]
+    
+    copied_items = []
+    failed_items = []
+    
+    for item in config_items:
+        source_path = config_dir / item
+        target_path = Path(target_dir) / item
+        
+        try:
+            if source_path.is_dir():
+                # Remove existing directory if it exists
+                if target_path.exists():
+                    shutil.rmtree(target_path)
+                # Copy directory
+                shutil.copytree(source_path, target_path)
+                copied_items.append(item)
+            elif source_path.is_file():
+                # Remove existing file if it exists
+                if target_path.exists():
+                    target_path.unlink()
+                # Copy file
+                shutil.copy2(source_path, target_path)
+                copied_items.append(item)
+            else:
+                failed_items.append(f"{item} (not found)")
+        except Exception as e:
+            failed_items.append(f"{item} ({str(e)})")
+    
+    if failed_items:
+        print(f"Failed to copy: {', '.join(failed_items)}")
+        # If we failed to copy local files, try downloading them
+        return download_config_files(target_dir)
+    
+    if copied_items:
+        print(f"Copied items: {', '.join(copied_items)}")
+    
+    return True
+
+def set_permissions(target_dir):
+    """Set proper permissions for hook scripts."""
+    hook_script = Path(target_dir) / ".claude" / "hooks" / "task_medium_prep_hook.py"
+    if hook_script.exists():
+        try:
+            hook_script.chmod(0o755)  # Make executable
+            return True
+        except Exception as e:
+            print(f"Warning: Could not set permissions for hook script: {e}")
+            return False
+    return False
+
+def init_command(directory=None, global_install=False):
+    """Initialize Claude Code configuration in the specified directory."""
+    # Handle global installation
+    if global_install:
+        target_dir = Path.home() / ".claude-code"
+        print(f"Initializing Claude Code configuration globally in '{target_dir}'...")
+    else:
+        # If no directory specified, use current directory
+        if directory is None:
+            directory = "."
+        
+        # Convert to absolute path
+        target_dir = Path(directory).resolve()
+        
+        # Check if target directory exists
+        if not target_dir.exists():
+            print(f"Error: Directory '{target_dir}' does not exist.")
+            return 1
+        
+        if not target_dir.is_dir():
+            print(f"Error: '{target_dir}' is not a directory.")
+            return 1
+        
+        print(f"Initializing Claude Code configuration in '{target_dir}'...")
+    
+    # Create target directory if doing global install
+    if global_install:
+        target_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Copy or download configuration files
+    if not copy_config_files(target_dir):
+        print("Error: Failed to copy or download configuration files.")
+        return 1
+    
+    # Set permissions for hook scripts
+    permissions_set = set_permissions(target_dir)
+    
+    if permissions_set:
+        print("Set executable permissions for hook scripts")
+    
+    if global_install:
+        print("Global initialization complete!")
+        print("\nYour custom agents and commands are now available globally.")
+        print("Note: Project-specific configurations will override global ones.")
+    else:
+        print("Initialization complete!")
+        print("\nNext steps:")
+        print("1. Ensure you have the required dependencies:")
+        print("   - Python 3.8+")
+        print("   - Node.js")
+        print("   - uv (https://github.com/astral-sh/uv)")
+        print("2. Install uv if not already installed:")
+        print("   curl -LsSf https://astral.sh/uv/install.sh | sh")
+        print("3. Start using Claude Code commands like:")
+        print("   /task_medium implement user authentication")
+    
+    return 0
+
+def main():
+    """Main entry point for the ccsetup command."""
+    parser = argparse.ArgumentParser(
+        description="Command-line tool for setting up Claude Code configuration",
+        prog="ccsetup",
+        usage="%(prog)s [command] [options]",
+        add_help=False
+    )
+    
+    parser.add_argument(
+        "command",
+        nargs="?",
+        help="Command to execute (init)"
+    )
+    
+    parser.add_argument(
+        "directory",
+        nargs="?",
+        help="Target directory for initialization (default: current directory)"
+    )
+    
+    parser.add_argument(
+        "--global",
+        dest="global_install",
+        action="store_true",
+        help="Install configuration globally (~/.claude-code/)"
+    )
+    
+    parser.add_argument(
+        "--help",
+        action="help",
+        help="Show this help message and exit"
+    )
+    
+    # If no arguments provided, show help
+    if len(sys.argv) == 1:
+        parser.print_help()
+        return 0
+    
+    args = parser.parse_args()
+    
+    # Handle commands
+    if args.command == "init":
+        return init_command(args.directory, args.global_install)
+    else:
+        print(f"Unknown command: {args.command}")
+        parser.print_help()
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())
