@@ -4,7 +4,6 @@ ccsetup - Command-line tool for setting up Claude Code configuration
 
 Usage:
   ccsetup init [directory]    Initialize Claude Code configuration in the specified directory
-  ccsetup init --global       Initialize Claude Code configuration globally (~/.claude-code/)
   ccsetup --help              Show this help message
 """
 
@@ -45,7 +44,7 @@ def download_config_files(target_dir):
         # Download the repository as a zip file
         try:
             urllib.request.urlretrieve(
-                "https://github.com/AizenvoltPrime/claude-setup/archive/refs/heads/main.zip",
+                "https://github.com/HamGuy/claude-setup/archive/refs/heads/main.zip",
                 zip_path
             )
         except Exception as e:
@@ -109,7 +108,7 @@ def download_config_files(target_dir):
         
         return True
 
-def copy_config_files(target_dir):
+def copy_config_files(target_dir, overwrite=False):
     """Copy all configuration files to the target directory."""
     # Get the directory where configuration files are located
     config_dir = get_config_dir()
@@ -127,23 +126,35 @@ def copy_config_files(target_dir):
     
     copied_items = []
     failed_items = []
+    skipped_items = []
     
     for item in config_items:
         source_path = config_dir / item
         target_path = Path(target_dir) / item
         
+        # Check if target already exists
+        if target_path.exists():
+            if not overwrite:
+                response = input(f"File/directory {item} already exists in target directory. Overwrite? (y/N): ")
+                if response.lower() != 'y':
+                    skipped_items.append(item)
+                    continue
+            # If overwrite is True or user confirmed, remove existing
+            try:
+                if target_path.is_dir():
+                    shutil.rmtree(target_path)
+                else:
+                    target_path.unlink()
+            except Exception as e:
+                failed_items.append(f"{item} (failed to remove existing: {str(e)})")
+                continue
+        
         try:
             if source_path.is_dir():
-                # Remove existing directory if it exists
-                if target_path.exists():
-                    shutil.rmtree(target_path)
                 # Copy directory
                 shutil.copytree(source_path, target_path)
                 copied_items.append(item)
             elif source_path.is_file():
-                # Remove existing file if it exists
-                if target_path.exists():
-                    target_path.unlink()
                 # Copy file
                 shutil.copy2(source_path, target_path)
                 copied_items.append(item)
@@ -152,10 +163,17 @@ def copy_config_files(target_dir):
         except Exception as e:
             failed_items.append(f"{item} ({str(e)})")
     
+    if skipped_items:
+        print(f"Skipped items: {', '.join(skipped_items)}")
+    
     if failed_items:
         print(f"Failed to copy: {', '.join(failed_items)}")
         # If we failed to copy local files, try downloading them
-        return download_config_files(target_dir)
+        if not overwrite:
+            response = input("Try downloading configuration files from GitHub instead? (y/N): ")
+            if response.lower() == 'y':
+                return download_config_files(target_dir)
+        return len(copied_items) > 0  # Return True if at least some items were copied
     
     if copied_items:
         print(f"Copied items: {', '.join(copied_items)}")
@@ -174,34 +192,35 @@ def set_permissions(target_dir):
             return False
     return False
 
-def init_command(directory=None, global_install=False):
+def init_command(directory=None):
     """Initialize Claude Code configuration in the specified directory."""
-    # Handle global installation
-    if global_install:
-        target_dir = Path.home() / ".claude-code"
-        print(f"Initializing Claude Code configuration globally in '{target_dir}'...")
-    else:
-        # If no directory specified, use current directory
-        if directory is None:
-            directory = "."
-        
-        # Convert to absolute path
-        target_dir = Path(directory).resolve()
-        
-        # Check if target directory exists
-        if not target_dir.exists():
-            print(f"Error: Directory '{target_dir}' does not exist.")
-            return 1
-        
-        if not target_dir.is_dir():
-            print(f"Error: '{target_dir}' is not a directory.")
-            return 1
-        
-        print(f"Initializing Claude Code configuration in '{target_dir}'...")
+    # If no directory specified, use current directory
+    if directory is None:
+        directory = "."
     
-    # Create target directory if doing global install
-    if global_install:
-        target_dir.mkdir(parents=True, exist_ok=True)
+    # Convert to absolute path
+    target_dir = Path(directory).resolve()
+    
+    # Check if target directory exists
+    if not target_dir.exists():
+        print(f"Error: Directory '{target_dir}' does not exist.")
+        return 1
+    
+    if not target_dir.is_dir():
+        print(f"Error: '{target_dir}' is not a directory.")
+        return 1
+    
+    print(f"Initializing Claude Code configuration in '{target_dir}'...")
+    
+    # Check if target already has Claude Code configuration
+    claude_dir = target_dir / ".claude"
+    mcp_file = target_dir / ".mcp.json"
+    
+    if claude_dir.exists() or mcp_file.exists():
+        response = input("Claude Code configuration already exists in target directory. Continue and potentially overwrite? (y/N): ")
+        if response.lower() != 'y':
+            print("Initialization cancelled.")
+            return 0
     
     # Copy or download configuration files
     if not copy_config_files(target_dir):
@@ -211,24 +230,20 @@ def init_command(directory=None, global_install=False):
     # Set permissions for hook scripts
     permissions_set = set_permissions(target_dir)
     
+    # Report results
     if permissions_set:
         print("Set executable permissions for hook scripts")
     
-    if global_install:
-        print("Global initialization complete!")
-        print("\nYour custom agents and commands are now available globally.")
-        print("Note: Project-specific configurations will override global ones.")
-    else:
-        print("Initialization complete!")
-        print("\nNext steps:")
-        print("1. Ensure you have the required dependencies:")
-        print("   - Python 3.8+")
-        print("   - Node.js")
-        print("   - uv (https://github.com/astral-sh/uv)")
-        print("2. Install uv if not already installed:")
-        print("   curl -LsSf https://astral.sh/uv/install.sh | sh")
-        print("3. Start using Claude Code commands like:")
-        print("   /task_medium implement user authentication")
+    print("Initialization complete!")
+    print("\nNext steps:")
+    print("1. Ensure you have the required dependencies:")
+    print("   - Python 3.8+")
+    print("   - Node.js")
+    print("   - uv (https://github.com/astral-sh/uv)")
+    print("2. Install uv if not already installed:")
+    print("   curl -LsSf https://astral.sh/uv/install.sh | sh")
+    print("3. Start using Claude Code commands like:")
+    print("   /task_medium implement user authentication")
     
     return 0
 
@@ -254,13 +269,6 @@ def main():
     )
     
     parser.add_argument(
-        "--global",
-        dest="global_install",
-        action="store_true",
-        help="Install configuration globally (~/.claude-code/)"
-    )
-    
-    parser.add_argument(
         "--help",
         action="help",
         help="Show this help message and exit"
@@ -275,7 +283,7 @@ def main():
     
     # Handle commands
     if args.command == "init":
-        return init_command(args.directory, args.global_install)
+        return init_command(args.directory)
     else:
         print(f"Unknown command: {args.command}")
         parser.print_help()

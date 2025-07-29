@@ -30,6 +30,8 @@ This project provides a pre-configured environment for Claude Code with enhanced
 
 ## Quick Start
 
+## Quick Start
+
 ### Option 1: Using ccsetup command (Recommended)
 
 ```bash
@@ -39,14 +41,25 @@ pip install uv
 # 2. Install ccsetup command
 sudo ./install.sh
 
-# 3a. Initialize Claude Code configuration in your project
+# 3. Initialize Claude Code configuration in your project
 ccsetup init /path/to/your/project
-
-# 3b. Or initialize globally for all projects
-ccsetup init --global
 
 # 4. Start using commands
 cd /path/to/your/project
+/task_medium implement user authentication
+```
+
+### Option 2: Manual setup
+
+```bash
+# 1. Install dependencies
+pip install uv
+
+# 2. Clone this configuration
+git clone <your-repo> claude-setup
+cd claude-setup
+
+# 3. Start using commands
 /task_medium implement user authentication
 ```
 
@@ -98,9 +111,6 @@ sudo ./install.sh
 
 # Initialize Claude Code configuration in any directory
 ccsetup init /path/to/your/project
-
-# Or initialize globally for all projects
-ccsetup init --global
 ```
 
 ##### Option B: Manual setup
@@ -158,20 +168,23 @@ A command-line tool that simplifies the process of setting up Claude Code config
 **Usage:**
 ```bash
 ccsetup init [directory]
-ccsetup init --global
 ```
 
 **Parameters:**
 - `directory` (optional): Target directory for initialization. Defaults to current directory if not specified.
-- `--global`: Install configuration globally in `~/.claude-code/` for all projects
 
 **Features:**
 - ✅ Automatically copies all required configuration files (`.claude/` directory and `.mcp.json` file)
 - ✅ Downloads configuration files from GitHub if not available locally
 - ✅ Sets proper permissions for hook scripts
+- ✅ Checks for existing configuration and prompts before overwriting
 - ✅ Provides helpful next steps after initialization
 - ✅ Works on any directory without manual file copying
-- ✅ Supports global installation for all projects
+
+**Important Notes:**
+- Claude Code commands (like `/task_easy`, `/task_medium`) must be present in each project's `.claude/commands/` directory
+- Global configuration in `~/.claude-code/` can contain settings but not commands
+- If a target directory already contains Claude Code configuration, the tool will prompt before overwriting
 
 **Example:**
 ```bash
@@ -180,9 +193,6 @@ ccsetup init
 
 # Initialize in a specific directory
 ccsetup init /path/to/my/project
-
-# Initialize globally for all projects
-ccsetup init --global
 ```
 
 ### `/task_medium` - Advanced Problem Solving
